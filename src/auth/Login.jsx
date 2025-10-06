@@ -1,11 +1,14 @@
 import * as React from "react";
-import Avatar from "@mui/material/Avatar";
-import Button from "@mui/material/Button";
-import CssBaseline from "@mui/material/CssBaseline";
-import Box from "@mui/material/Box";
+import {
+  Avatar,
+  Button,
+  CssBaseline,
+  Box,
+  Typography,
+  Container,
+  Paper,
+} from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import Typography from "@mui/material/Typography";
-import Container from "@mui/material/Container";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useDispatch } from "react-redux";
 import { useSnackbar } from "notistack";
@@ -16,39 +19,32 @@ import { Form, Formik } from "formik";
 import { InputField } from "../component/CustomField";
 import * as Yup from "yup";
 
-// ✅ Validation Schema
+const theme = createTheme({
+  typography: {
+    fontFamily: "Poppins, sans-serif",
+  },
+});
+
 const loginValidationSchema = Yup.object({
   email: Yup.string().email("Invalid email").required("Email is required"),
   password: Yup.string().required("Password is required"),
 });
-
-const defaultTheme = createTheme();
 
 export default function Login() {
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = React.useState(false);
 
-  // ✅ Handle Form Submission
   const handleFormSubmit = async (values) => {
     try {
       setLoading(true);
-
-      const payload = {
+      const res = await UserLogin({
         email: values.email,
         password: values.password,
-      };
+      });
 
-      const res = await UserLogin(payload);
       setLoading(false);
-
-      dispatch(
-        setUser({
-          token: res.data.accessToken,
-          user: res.data.user,
-        })
-      );
-
+      dispatch(setUser({ token: res.data.accessToken, user: res.data.user }));
       enqueueSnackbar("Login successful!", { variant: "success" });
     } catch (err) {
       setLoading(false);
@@ -59,63 +55,97 @@ export default function Login() {
   };
 
   return (
-    <ThemeProvider theme={defaultTheme}>
+    <ThemeProvider theme={theme}>
       {loading && <Loader />}
-      <Formik
-        initialValues={{ email: "", password: "" }}
-        validationSchema={loginValidationSchema}
-        onSubmit={handleFormSubmit}
+      <Box
+        sx={{
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 2,
+        }}
       >
-        {({ handleSubmit }) => (
-          <Form onSubmit={handleSubmit} autoComplete="off">
-            <Container component="main" maxWidth="xs">
-              <CssBaseline />
-              <Box
-                sx={{
-                  marginTop: 8,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
+        <Container component="main" maxWidth="xs">
+          <CssBaseline />
+          <Paper
+            elevation={6}
+            sx={{
+              padding: 4,
+              borderRadius: 4,
+              backdropFilter: "blur(10px)",
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <Avatar sx={{ m: 1, bgcolor: "#2a5298" }}>
+                <LockOutlinedIcon />
+              </Avatar>
+
+              <Typography
+                component="h1"
+                variant="h5"
+                sx={{ fontWeight: "600" }}
               >
-                <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
-                  <LockOutlinedIcon />
-                </Avatar>
-                <Typography component="h1" variant="h5">
-                  Sign in
-                </Typography>
+                Welcome Back 👋
+              </Typography>
+              <Typography variant="body2" sx={{ color: "gray", mb: 3 }}>
+                Sign in to continue to your dashboard
+              </Typography>
 
-                <Box sx={{ mt: 1 }}>
-                  <InputField
-                    name="email"
-                    label="Email Address"
-                    placeholder="Enter your email"
-                    fullWidth
-                  />
+              <Formik
+                initialValues={{ email: "", password: "" }}
+                validationSchema={loginValidationSchema}
+                onSubmit={handleFormSubmit}
+              >
+                {({ handleSubmit }) => (
+                  <Form onSubmit={handleSubmit} style={{ width: "100%" }}>
+                    <InputField
+                      name="email"
+                      label="Email"
+                      placeholder="Enter your email"
+                      fullWidth
+                    />
+                    <InputField
+                      name="password"
+                      label="Password"
+                      placeholder="Enter your password"
+                      type="password"
+                      fullWidth
+                    />
 
-                  <InputField
-                    name="password"
-                    label="Password"
-                    placeholder="Enter your password"
-                    type="password"
-                    fullWidth
-                  />
-
-                  {/* ✅ Fix: Add type="submit" */}
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    sx={{ mt: 3, mb: 2 }}
-                  >
-                    Sign In
-                  </Button>
-                </Box>
-              </Box>
-            </Container>
-          </Form>
-        )}
-      </Formik>
+                    <Button
+                      type="submit"
+                      fullWidth
+                      variant="contained"
+                      sx={{
+                        mt: 3,
+                        mb: 2,
+                        py: 1.3,
+                        fontSize: "16px",
+                        backgroundColor: "#1e3c72",
+                        "&:hover": {
+                          backgroundColor: "#2a5298",
+                        },
+                        textTransform: "none",
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                  </Form>
+                )}
+              </Formik>
+            </Box>
+          </Paper>
+        </Container>
+      </Box>
     </ThemeProvider>
   );
 }

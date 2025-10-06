@@ -17,23 +17,19 @@ export const InputField = (props) => {
   const [field, meta] = useField(props);
 
   return (
-    <>
+    <div style={{ marginTop: "12px" }}>
       <TextField
-        sx={{ marginTop: 1 }}
-        size="medium"
         {...field}
         {...props}
-        value={field.value !== undefined ? field.value : ""}
+        value={field.value || ""}
         id={field.name}
         variant="outlined"
-        className="w-full"
-        // helperText={meta.touched ? meta.error : ""}
+        size="medium"
+        fullWidth
         error={meta.touched && Boolean(meta.error)}
+        helperText={meta.touched ? meta.error : ""}
       />
-      {meta.touched && meta.error && (
-        <small className="text-red-600">{meta.error}</small>
-      )}
-    </>
+    </div>
   );
 };
 
