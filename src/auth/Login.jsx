@@ -47,6 +47,7 @@ export default function Login() {
 
       setLoading(false);
       dispatch(setUser({ token: res.data.accessToken, user: res.data.user }));
+      localStorage.setItem("token", res.data.accessToken);
       enqueueSnackbar("Login successful!", { variant: "success" });
       const position = res.data.user.position;
       if (position === "student") navigate("/student-dashboard");

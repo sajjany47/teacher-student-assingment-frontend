@@ -82,6 +82,11 @@ const TeacherDashboard = () => {
     setAssignments((prev) => prev.filter((a) => a.id !== id));
   };
 
+  const handelAssignmentSubmit = (values) => {
+    console.log(values);
+    handleCloseDialog();
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
@@ -168,19 +173,7 @@ const TeacherDashboard = () => {
             }
           }
           validationSchema={validationSchema}
-          onSubmit={(values) => {
-            if (editAssignment) {
-              setAssignments((prev) =>
-                prev.map((a) => (a.id === editAssignment.id ? values : a))
-              );
-            } else {
-              setAssignments((prev) => [
-                ...prev,
-                { ...values, id: Date.now() },
-              ]);
-            }
-            handleCloseDialog();
-          }}
+          onSubmit={handelAssignmentSubmit}
         >
           {({ values, handleSubmit }) => (
             <Form onSubmit={handleSubmit}>
