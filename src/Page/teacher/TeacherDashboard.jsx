@@ -20,6 +20,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Chip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -41,6 +42,7 @@ import {
   EditAssignment,
 } from "../../MainService";
 import Loader from "../../component/Loader";
+import moment from "moment";
 
 const statusOptions = [
   { label: "All", value: "" },
@@ -144,7 +146,6 @@ const TeacherDashboard = () => {
     }
   };
 
-  // ========================= Delete Handler =========================
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this assignment?")) {
       DeleteAssignment(id)
@@ -160,6 +161,30 @@ const TeacherDashboard = () => {
           });
         });
     }
+  };
+
+  const formatDate = (dateString) => {
+    return moment(dateString).format("Do MMM YYYY"); // e.g. 22nd May 2025
+  };
+
+  const getStatusChip = (status) => {
+    let color = "default";
+    switch (status) {
+      case "Draft":
+        color = "default"; // gray
+        break;
+      case "Published":
+        color = "primary"; // blue
+        break;
+      case "Completed":
+        color = "success"; // green
+        break;
+      default:
+        color = "default";
+    }
+    return (
+      <Chip label={status} color={color} variant="outlined" size="small" />
+    );
   };
 
   return (
@@ -218,33 +243,59 @@ const TeacherDashboard = () => {
                 <TableRow key={assignment._id || assignment.id}>
                   <TableCell>{assignment.title}</TableCell>
                   <TableCell>{assignment.description}</TableCell>
-                  <TableCell>{assignment.dueDate}</TableCell>
-                  <TableCell>{assignment.status}</TableCell>
+                  <TableCell>{formatDate(assignment.dueDate)}</TableCell>
+                  <TableCell>{getStatusChip(assignment.status)}</TableCell>
+
+                  {/* ================= Actions ================= */}
                   <TableCell align="center">
+                    {/* Always show View */}
                     <Tooltip title="View">
                       <IconButton onClick={() => handleOpenDialog(assignment)}>
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Edit">
-                      <IconButton onClick={() => handleOpenDialog(assignment)}>
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Lock">
-                      <IconButton>
-                        <LockIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        onClick={() =>
-                          handleDelete(assignment._id || assignment.id)
-                        }
-                      >
-                        <DeleteIcon color="error" />
-                      </IconButton>
-                    </Tooltip>
+
+                    {/* If status is Draft → show Edit + Delete */}
+                    {assignment.status === "Draft" && (
+                      <>
+                        <Tooltip title="Edit">
+                          <IconButton
+                            onClick={() => handleOpenDialog(assignment)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            onClick={() =>
+                              handleDelete(assignment._id || assignment.id)
+                            }
+                          >
+                            <DeleteIcon color="error" />
+                          </IconButton>
+                        </Tooltip>
+                      </>
+                    )}
+
+                    {/* If Published → show Edit only */}
+                    {assignment.status === "Published" && (
+                      <Tooltip title="Edit">
+                        <IconButton
+                          onClick={() => handleOpenDialog(assignment)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+
+                    {/* If Completed → show Lock only */}
+                    {assignment.status === "Completed" && (
+                      <Tooltip title="Locked">
+                        <IconButton disabled>
+                          <LockIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
