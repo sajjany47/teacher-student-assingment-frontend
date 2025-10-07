@@ -18,6 +18,7 @@ import { UserLogin } from "../MainService";
 import { Form, Formik } from "formik";
 import { InputField } from "../component/CustomField";
 import * as Yup from "yup";
+import { useNavigate } from "react-router-dom";
 
 const theme = createTheme({
   typography: {
@@ -32,6 +33,7 @@ const loginValidationSchema = Yup.object({
 
 export default function Login() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = React.useState(false);
 
@@ -46,6 +48,9 @@ export default function Login() {
       setLoading(false);
       dispatch(setUser({ token: res.data.accessToken, user: res.data.user }));
       enqueueSnackbar("Login successful!", { variant: "success" });
+      const position = res.data.user.position;
+      if (position === "student") navigate("/student-dashboard");
+      else if (position === "teacher") navigate("/teacher-dashboard");
     } catch (err) {
       setLoading(false);
       enqueueSnackbar(err.message || "Login failed", {

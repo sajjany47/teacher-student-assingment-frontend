@@ -17,7 +17,7 @@ export const InputField = (props) => {
   const [field, meta] = useField(props);
 
   return (
-    <FormControl fullWidth>
+    <FormControl fullWidth style={{ marginTop: 15 }}>
       <TextField
         {...field}
         {...props}
@@ -38,7 +38,7 @@ export const SelectField = (props) => {
 
   return (
     <>
-      <FormControl fullWidth>
+      <FormControl fullWidth style={{ marginTop: 15 }}>
         <InputLabel id={field.name} sx={{ marginTop: 1 }}>
           {props.label}
         </InputLabel>
@@ -77,7 +77,7 @@ export const DateField = (props) => {
   const [field, meta] = useField(props);
   const { setFieldValue } = useFormikContext();
   return (
-    <FormControl fullWidth>
+    <FormControl fullWidth style={{ marginTop: 15 }}>
       <LocalizationProvider dateAdapter={AdapterMoment}>
         <DemoContainer components={["DatePicker"]} sx={{ paddingTop: 1 }}>
           <DatePicker
@@ -111,7 +111,7 @@ export const TimeField = (props) => {
   const [field, meta] = useField(props);
   const { setFieldValue } = useFormikContext();
   return (
-    <FormControl fullWidth>
+    <FormControl fullWidth style={{ marginTop: 15 }}>
       <LocalizationProvider dateAdapter={AdapterMoment}>
         <DemoContainer components={["TimePicker"]}>
           <TimePicker

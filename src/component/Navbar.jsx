@@ -8,17 +8,24 @@ import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../store/reducer/authReducer";
 
-const settings = ["Dashboard", "Logout"];
+const settings = ["Logout"];
 
 function Navbar() {
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth).user;
   const [anchorElUser, setAnchorElUser] = React.useState(null);
 
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
   };
 
-  const handleCloseUserMenu = () => {
+  const handleCloseUserMenu = (value) => {
+    if (value === "Logout") {
+      dispatch(logout());
+    }
     setAnchorElUser(null);
   };
 
@@ -39,7 +46,11 @@ function Navbar() {
             textDecoration: "none",
           }}
         >
-          Dashboard
+          {`${user?.position
+            ?.toLowerCase()
+            .split(" ")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")} Dashboard`}
         </Typography>
 
         {/* User Avatar */}
@@ -65,7 +76,10 @@ function Navbar() {
             onClose={handleCloseUserMenu}
           >
             {settings.map((setting) => (
-              <MenuItem key={setting} onClick={handleCloseUserMenu}>
+              <MenuItem
+                key={setting}
+                onClick={() => handleCloseUserMenu(setting)}
+              >
                 {setting}
               </MenuItem>
             ))}
