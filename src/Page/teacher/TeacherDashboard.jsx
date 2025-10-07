@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -15,12 +15,17 @@ import {
   Paper,
   IconButton,
   Tooltip,
+  Pagination,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import LockIcon from "@mui/icons-material/Lock";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Formik, Form, FieldArray, Field } from "formik";
+import { Formik, Form, FieldArray } from "formik";
 import * as Yup from "yup";
 import {
   InputField,
@@ -28,21 +33,17 @@ import {
   DateField,
 } from "../../component/CustomField";
 
-const initialAssignments = [
-  {
-    id: 1,
-    title: "Math Homework",
-    description: "Solve 10 algebra problems",
-    dueDate: "2025-10-15",
-    status: "Draft",
-    questions: [
-      { question: "What is 2+2?", answer: "4" },
-      { question: "Simplify x + x", answer: "2x" },
-    ],
-  },
-];
+import { useSnackbar } from "notistack";
+import {
+  CreateAssignment,
+  DatatableAssignment,
+  DeleteAssignment,
+  EditAssignment,
+} from "../../MainService";
+import Loader from "../../component/Loader";
 
 const statusOptions = [
+  { label: "All", value: "" },
   { label: "Draft", value: "Draft" },
   { label: "Published", value: "Published" },
   { label: "Completed", value: "Completed" },
@@ -57,16 +58,47 @@ const validationSchema = Yup.object().shape({
     .of(
       Yup.object().shape({
         question: Yup.string().required("Question is required"),
-        answer: Yup.string().required("Answer is required"),
       })
     )
     .min(1, "At least one question is required"),
 });
 
 const TeacherDashboard = () => {
-  const [assignments, setAssignments] = useState(initialAssignments);
+  const { enqueueSnackbar } = useSnackbar();
+  const [assignments, setAssignments] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [editAssignment, setEditAssignment] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const fetchAssignments = () => {
+    setLoading(true);
+
+    const payload = {
+      page,
+      limit,
+      status: statusFilter,
+    };
+    DatatableAssignment(payload)
+      .then((res) => {
+        setAssignments(res.data || []);
+        setTotalPages(res.totalPages || 1);
+        setLoading(false);
+      })
+      .catch((error) => {
+        setLoading(false);
+        enqueueSnackbar(error.message || "Failed to load assignments", {
+          variant: "error",
+        });
+      });
+  };
+
+  useEffect(() => {
+    fetchAssignments();
+  }, [page, statusFilter]);
 
   const handleOpenDialog = (assignment = null) => {
     setEditAssignment(assignment);
@@ -78,18 +110,62 @@ const TeacherDashboard = () => {
     setEditAssignment(null);
   };
 
-  const handleDelete = (id) => {
-    setAssignments((prev) => prev.filter((a) => a.id !== id));
+  const handleAssignmentSubmit = (values, { resetForm }) => {
+    if (editAssignment) {
+      EditAssignment({ ...values, _id: editAssignment._id })
+        .then(() => {
+          enqueueSnackbar("Assignment updated successfully", {
+            variant: "success",
+          });
+          resetForm();
+          handleCloseDialog();
+          fetchAssignments();
+        })
+        .catch((error) => {
+          enqueueSnackbar(error.message || "Failed to update assignment", {
+            variant: "error",
+          });
+        });
+    } else {
+      CreateAssignment(values)
+        .then(() => {
+          enqueueSnackbar("Assignment created successfully", {
+            variant: "success",
+          });
+          resetForm();
+          handleCloseDialog();
+          fetchAssignments();
+        })
+        .catch((error) => {
+          enqueueSnackbar(error.message || "Failed to create assignment", {
+            variant: "error",
+          });
+        });
+    }
   };
 
-  const handelAssignmentSubmit = (values) => {
-    console.log(values);
-    handleCloseDialog();
+  // ========================= Delete Handler =========================
+  const handleDelete = (id) => {
+    if (window.confirm("Are you sure you want to delete this assignment?")) {
+      DeleteAssignment(id)
+        .then(() => {
+          enqueueSnackbar("Assignment deleted successfully", {
+            variant: "success",
+          });
+          fetchAssignments();
+        })
+        .catch((error) => {
+          enqueueSnackbar(error.message || "Failed to delete assignment", {
+            variant: "error",
+          });
+        });
+    }
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
+      {loading && <Loader />}
+      {/* Header with Filter */}
       <Box
         sx={{
           display: "flex",
@@ -99,9 +175,29 @@ const TeacherDashboard = () => {
         }}
       >
         <h2>Assignments</h2>
-        <Button variant="contained" onClick={() => handleOpenDialog()}>
-          Add Assignment
-        </Button>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <FormControl sx={{ minWidth: 180 }}>
+            <InputLabel>Status Filter</InputLabel>
+            <Select
+              label="Status Filter"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+            >
+              {statusOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Button variant="contained" onClick={() => handleOpenDialog()}>
+            + Add Assignment
+          </Button>
+        </Box>
       </Box>
 
       {/* Table */}
@@ -113,43 +209,66 @@ const TeacherDashboard = () => {
               <TableCell>Description</TableCell>
               <TableCell>Due Date</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {assignments.map((assignment) => (
-              <TableRow key={assignment.id}>
-                <TableCell>{assignment.title}</TableCell>
-                <TableCell>{assignment.description}</TableCell>
-                <TableCell>{assignment.dueDate}</TableCell>
-                <TableCell>{assignment.status}</TableCell>
-                <TableCell>
-                  <Tooltip title="View">
-                    <IconButton onClick={() => handleOpenDialog(assignment)}>
-                      <VisibilityIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Edit">
-                    <IconButton onClick={() => handleOpenDialog(assignment)}>
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Lock">
-                    <IconButton>
-                      <LockIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton onClick={() => handleDelete(assignment.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
+            {assignments.length > 0 ? (
+              assignments.map((assignment) => (
+                <TableRow key={assignment._id || assignment.id}>
+                  <TableCell>{assignment.title}</TableCell>
+                  <TableCell>{assignment.description}</TableCell>
+                  <TableCell>{assignment.dueDate}</TableCell>
+                  <TableCell>{assignment.status}</TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="View">
+                      <IconButton onClick={() => handleOpenDialog(assignment)}>
+                        <VisibilityIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Edit">
+                      <IconButton onClick={() => handleOpenDialog(assignment)}>
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Lock">
+                      <IconButton>
+                        <LockIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton
+                        onClick={() =>
+                          handleDelete(assignment._id || assignment.id)
+                        }
+                      >
+                        <DeleteIcon color="error" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  No assignments found
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Pagination */}
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+        <Pagination
+          count={totalPages}
+          page={page}
+          onChange={(e, newPage) => setPage(newPage)}
+          color="primary"
+          shape="rounded"
+        />
+      </Box>
 
       {/* Add/Edit Dialog */}
       <Dialog
@@ -169,11 +288,12 @@ const TeacherDashboard = () => {
               description: "",
               dueDate: "",
               status: "Draft",
-              questions: [{ question: "", answer: "" }],
+              questions: [{ question: "" }],
             }
           }
           validationSchema={validationSchema}
-          onSubmit={handelAssignmentSubmit}
+          enableReinitialize
+          onSubmit={handleAssignmentSubmit}
         >
           {({ values, handleSubmit }) => (
             <Form onSubmit={handleSubmit}>
@@ -185,7 +305,6 @@ const TeacherDashboard = () => {
                   label="Title"
                   placeholder="Enter title"
                 />
-
                 <InputField
                   name="description"
                   label="Description"
@@ -193,19 +312,16 @@ const TeacherDashboard = () => {
                   multiline
                   rows={3}
                 />
-
                 <DateField
                   name="dueDate"
                   label="Due Date"
                   placeholder="Select due date"
-                  views={["year", "month", "day"]}
                 />
-
                 <SelectField
                   name="status"
                   label="Status"
                   placeholder="Select status"
-                  options={statusOptions}
+                  options={statusOptions.slice(1)} // remove "All"
                 />
 
                 {/* Question FieldArray */}
@@ -223,8 +339,7 @@ const TeacherDashboard = () => {
                         <h4>Questions</h4>
                         <Button
                           variant="outlined"
-                          onClick={() => push({ question: "", answer: "" })}
-                          // size="small"
+                          onClick={() => push({ question: "" })}
                         >
                           + Add Question
                         </Button>
@@ -246,17 +361,10 @@ const TeacherDashboard = () => {
                             fullWidth
                           />
 
-                          <InputField
-                            label="Answer"
-                            name={`questions[${index}].answer`}
-                            placeholder="Enter answer"
-                            fullWidth
-                          />
                           <IconButton
                             onClick={() => remove(index)}
-                            // color="primary"
-                            size="medium"
                             color="error"
+                            size="medium"
                           >
                             <DeleteIcon />
                           </IconButton>
