@@ -41,11 +41,17 @@ const AssignmentDetail = () => {
     description: assignment.description || "",
     dueDate: assignment.dueDate || "",
     questions:
-      assignment.questions?.map((q) => ({
-        ...q,
-        question: q.question,
-        answer: "",
-      })) || [],
+      assignment.questions?.map((q) => {
+        const answerObj = assignment.submissionDetails?.answers?.find(
+          (a) => a.questionId === q._id
+        );
+
+        return {
+          ...q,
+          question: q.question,
+          answer: answerObj ? answerObj.answerText : "",
+        };
+      }) || [],
   };
 
   // ✅ Handle Submit
@@ -150,6 +156,7 @@ const AssignmentDetail = () => {
                               multiline
                               rows={3}
                               fullWidth
+                              disabled={assignment.isSubmit}
                             />
 
                             {/* Optional: Allow remove (if you want students to remove a question) */}
@@ -177,6 +184,7 @@ const AssignmentDetail = () => {
                   variant="contained"
                   color="primary"
                   disabled={
+                    assignment.isSubmit ||
                     !values.questions.every(
                       (q) => q.answer && q.answer.trim() !== ""
                     )
