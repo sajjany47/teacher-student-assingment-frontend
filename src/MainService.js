@@ -101,7 +101,7 @@ export const AssignmentReview = async (id) => {
 export const StudentAssignmentList = async (assignmentId, studentId) => {
   try {
     const response = await axios.get(
-      `${BASE_URL}/assigment/${assignmentId}/student/:${studentId}`,
+      `${BASE_URL}/assigment/${assignmentId}/student/${studentId}`,
 
       {
         headers: getHeadersWithToken(),

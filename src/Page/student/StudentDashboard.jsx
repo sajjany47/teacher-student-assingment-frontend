@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Table,
@@ -9,37 +9,50 @@ import {
   TableRow,
   Paper,
   Button,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-
-// Dummy published assignments
-const publishedAssignments = [
-  {
-    id: 1,
-    title: "Math Homework",
-    description: "Solve 10 algebra problems",
-    dueDate: "2025-10-15",
-    status: "Published",
-    questions: [{ question: "What is 2+2?" }, { question: "Simplify x + x" }],
-  },
-  {
-    id: 2,
-    title: "Science Project",
-    description: "Build a volcano model",
-    dueDate: "2025-10-20",
-    status: "Published",
-    questions: [
-      { question: "What is chemical reaction?" },
-      { question: "Explain volcano eruption process" },
-    ],
-  },
-];
+import { DatatableAssignment } from "../../MainService";
+import { enqueueSnackbar } from "notistack";
+import moment from "moment";
+import Loader from "../../component/Loader";
+import LockIcon from "@mui/icons-material/Lock";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
 
+  const [loading, setLoading] = useState(false);
+  const [assignments, setAssignments] = useState([]);
+  // const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    FetchAssignmentList();
+  }, []);
+  const FetchAssignmentList = () => {
+    setLoading(true);
+
+    const payload = {
+      page: 1,
+      limit: 100,
+      status: "Published",
+    };
+    DatatableAssignment(payload)
+      .then((res) => {
+        setAssignments(res.data || []);
+        setLoading(false);
+      })
+      .catch((error) => {
+        setLoading(false);
+        enqueueSnackbar(error.message || "Failed to load assignments", {
+          variant: "error",
+        });
+      });
+  };
+
   return (
     <Box sx={{ p: 3 }}>
+      {loading && <Loader />}
       <h2>Published Assignments</h2>
       <TableContainer component={Paper}>
         <Table>
@@ -52,22 +65,31 @@ const StudentDashboard = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {publishedAssignments.map((assignment) => (
-              <TableRow key={assignment.id}>
+            {assignments.map((assignment) => (
+              <TableRow key={assignment._id}>
                 <TableCell>{assignment.title}</TableCell>
                 <TableCell>{assignment.description}</TableCell>
-                <TableCell>{assignment.dueDate}</TableCell>
+                <TableCell>
+                  {moment(assignment.dueDate).format("Do,MMM,YYYY")}
+                </TableCell>
                 <TableCell>
                   <Button
                     variant="contained"
                     onClick={() =>
-                      navigate(`/assignment/${assignment.id}`, {
+                      navigate(`/assignment/${assignment._id}`, {
                         state: { assignment },
                       })
                     }
                   >
                     View
                   </Button>
+                  {assignment.isSubmit && (
+                    <Tooltip title="Locked">
+                      <IconButton disabled>
+                        <LockIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

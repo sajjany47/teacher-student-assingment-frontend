@@ -133,9 +133,9 @@ const StudentList = () => {
                 <TableRow key={s._id}>
                   <TableCell>{s.name}</TableCell>
                   <TableCell>{s.email}</TableCell>
-                  <TableCell>{s.isCompleted ? "Yes" : "No"}</TableCell>
+                  <TableCell>{s.isSubmit ? "Yes" : "No"}</TableCell>
                   <TableCell align="center">
-                    {s.isCompleted && (
+                    {s.isSubmit && (
                       <Button
                         variant="contained"
                         onClick={() => handleViewStudent(s)}
@@ -206,7 +206,7 @@ const StudentList = () => {
                         <b>Q{index + 1}:</b> {a.question}
                       </Box>
                       <Box sx={{ flex: 3 }}>
-                        <b>Answer:</b> {a.answer}
+                        <b>Answer:</b> {a.answerText}
                       </Box>
                       <Box sx={{ flex: 2 }}>
                         <SelectField
