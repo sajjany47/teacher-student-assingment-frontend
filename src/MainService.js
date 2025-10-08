@@ -83,11 +83,11 @@ export const StudentAssignmentSubmit = async (payload) => {
   }
 };
 
-export const AssignmentReview = async (id) => {
+export const AssignmentReview = async (payload) => {
   try {
     const response = await axios.post(
-      `${BASE_URL}/assigment/review-teacher/${id}`,
-
+      `${BASE_URL}/assigment/review-teacher`,
+      payload,
       {
         headers: getHeadersWithToken(),
       }

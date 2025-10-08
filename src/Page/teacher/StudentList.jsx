@@ -13,6 +13,8 @@ import {
   DialogContent,
   DialogTitle,
   Pagination,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { useSnackbar } from "notistack";
@@ -24,7 +26,8 @@ import {
 import Loader from "../../component/Loader";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { SelectField, InputField } from "../../component/CustomField";
+import { InputField } from "../../component/CustomField";
+import LockIcon from "@mui/icons-material/Lock";
 
 const validationSchema = Yup.object().shape({
   totalMarks: Yup.number().required("Total marks required"),
@@ -96,8 +99,13 @@ const StudentList = () => {
   };
 
   const handleSubmitReview = (values) => {
+    let payload = {
+      submissionId: assignmentDeatials.submissionId,
+      marksObtained: values.marksObtained,
+      totalMarks: values.totalMarks,
+    };
     // let payload={submissionId:}
-    AssignmentReview(currentStudent.id)
+    AssignmentReview(payload)
       .then(() => {
         enqueueSnackbar("Review submitted successfully", {
           variant: "success",
@@ -124,6 +132,7 @@ const StudentList = () => {
               <TableCell>Student</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Completed</TableCell>
+              <TableCell>Marks</TableCell>
               <TableCell align="center">Action</TableCell>
             </TableRow>
           </TableHead>
@@ -134,14 +143,22 @@ const StudentList = () => {
                   <TableCell>{s.name}</TableCell>
                   <TableCell>{s.email}</TableCell>
                   <TableCell>{s.isSubmit ? "Yes" : "No"}</TableCell>
+                  <TableCell>{s.marks}</TableCell>
                   <TableCell align="center">
-                    {s.isSubmit && (
+                    {s.isSubmit && s.status === "submitted" && (
                       <Button
                         variant="contained"
                         onClick={() => handleViewStudent(s)}
                       >
                         Review
                       </Button>
+                    )}
+                    {s.status === "reviewed" && (
+                      <Tooltip title="Locked">
+                        <IconButton disabled>
+                          <LockIcon />
+                        </IconButton>
+                      </Tooltip>
                     )}
                   </TableCell>
                 </TableRow>
@@ -207,16 +224,6 @@ const StudentList = () => {
                       </Box>
                       <Box sx={{ flex: 3 }}>
                         <b>Answer:</b> {a.answerText}
-                      </Box>
-                      <Box sx={{ flex: 2 }}>
-                        <SelectField
-                          name={`answers[${index}].isCorrect`}
-                          label="Correct?"
-                          options={[
-                            { label: "Yes", value: true },
-                            { label: "No", value: false },
-                          ]}
-                        />
                       </Box>
                     </Box>
                   ))

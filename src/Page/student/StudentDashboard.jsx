@@ -61,6 +61,7 @@ const StudentDashboard = () => {
               <TableCell>Title</TableCell>
               <TableCell>Description</TableCell>
               <TableCell>Due Date</TableCell>
+              <TableCell>Marks</TableCell>
               <TableCell>Action</TableCell>
             </TableRow>
           </TableHead>
@@ -72,6 +73,7 @@ const StudentDashboard = () => {
                 <TableCell>
                   {moment(assignment.dueDate).format("Do,MMM,YYYY")}
                 </TableCell>
+                <TableCell>{assignment.marks}</TableCell>
                 <TableCell>
                   <Button
                     variant="contained"
